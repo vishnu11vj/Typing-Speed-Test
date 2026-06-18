@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Typing Speed Test</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{min-height:100vh;background:#13111c;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:'Inter',sans-serif;padding:20px;}
+  h1{color:#e2b714;font-size:28px;font-weight:700;margin-bottom:6px;letter-spacing:1px;}
+  .sub{color:#646079;font-size:14px;margin-bottom:32px;}
+  .hud{display:flex;gap:32px;margin-bottom:28px;}
+  .hud-item{text-align:center;}
+  .hud-val{font-size:36px;font-weight:700;color:#e2b714;font-family:'Space Mono';}
+  .hud-label{color:#646079;font-size:11px;text-transform:uppercase;letter-spacing:2px;margin-top:4px;}
+  .timer-bar{width:600px;height:4px;background:#2c2a3a;border-radius:2px;margin-bottom:24px;overflow:hidden;}
+  .timer-fill{height:100%;background:#e2b714;border-radius:2px;transition:width 1s linear;}
+  .words{width:600px;background:#1c1a2a;border-radius:16px;padding:28px;margin-bottom:16px;font-family:'Space Mono';font-size:18px;line-height:2;color:#646079;user-select:none;position:relative;overflow:hidden;}
+  .words span.correct{color:#a8cc8c;}
+  .words span.wrong{color:#f08080;background:#3a1a1a;border-radius:2px;}
+  .words span.current{border-bottom:2px solid #e2b714;color:#e2b714;}
+  .words span{transition:color 0.1s;}
+  .input-area{width:600px;position:relative;}
+  input[type=text]{width:100%;padding:16px 20px;background:#1c1a2a;border:2px solid #2c2a3a;border-radius:12px;color:#fff;font-family:'Space Mono';font-size:16px;outline:none;transition:border 0.2s;}
+  input[type=text]:focus{border-color:#e2b714;}
+  input[type=text]:disabled{opacity:0.5;}
+  .restart-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:#2c2a3a;border:none;color:#646079;padding:8px 16px;border-radius:8px;font-family:'Inter';font-size:13px;cursor:pointer;transition:all 0.2s;}
+  .restart-btn:hover{background:#3c3a4a;color:#fff;}
+  .result-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);display:none;align-items:center;justify-content:center;}
+  .result-card{background:#1c1a2a;border-radius:24px;padding:40px;text-align:center;border:1px solid #2c2a3a;width:400px;}
+  .result-wpm{font-size:72px;font-weight:700;color:#e2b714;font-family:'Space Mono';}
+  .result-label{color:#646079;font-size:14px;margin-bottom:20px;letter-spacing:2px;text-transform:uppercase;}
+  .result-stats{display:flex;gap:24px;justify-content:center;margin-bottom:28px;}
+  .rst{text-align:center;}
+  .rst-val{font-size:24px;font-weight:700;color:#a8cc8c;font-family:'Space Mono';}
+  .rst-label{color:#646079;font-size:12px;margin-top:4px;}
+  .play-btn{padding:14px 32px;background:#e2b714;color:#13111c;border:none;border-radius:12px;font-family:'Inter';font-size:15px;font-weight:700;cursor:pointer;}
+</style>
+</head>
+<body>
+<h1>⌨️ Typing Speed Test</h1>
+<p class="sub">Type the words as fast and accurately as you can</p>
+<div class="hud">
+  <div class="hud-item"><div class="hud-val" id="wpm">0</div><div class="hud-label">WPM</div></div>
+  <div class="hud-item"><div class="hud-val" id="acc">100</div><div class="hud-label">Accuracy %</div></div>
+  <div class="hud-item"><div class="hud-val" id="timeLeft">60</div><div class="hud-label">Seconds</div></div>
+</div>
+<div class="timer-bar"><div class="timer-fill" id="timerFill" style="width:100%"></div></div>
+<div class="words" id="wordDisplay"></div>
+<div class="input-area">
+  <input type="text" id="typingInput" placeholder="Start typing here..." oninput="onInput()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <button class="restart-btn" onclick="restart()">↺ Restart</button>
+</div>
+<div class="result-overlay" id="resultOverlay">
+  <div class="result-card">
+    <div class="result-wpm" id="finalWpm"></div>
+    <div class="result-label">Words per minute</div>
+    <div class="result-stats">
+      <div class="rst"><div class="rst-val" id="finalAcc"></div><div class="rst-label">Accuracy</div></div>
+      <div class="rst"><div class="rst-val" id="finalCorrect"></div><div class="rst-label">Correct</div></div>
+      <div class="rst"><div class="rst-val" id="finalWrong"></div><div class="rst-label">Errors</div></div>
+    </div>
+    <button class="play-btn" onclick="restart()">Try Again</button>
+  </div>
+</div>
+<script>
+const WORDS=['the','be','to','of','and','a','in','that','have','it','for','not','on','with','he','as','you','do','at','this','but','his','by','from','they','we','say','her','she','or','an','will','my','one','all','would','there','their','what','so','up','out','if','about','who','get','which','go','me','when','make','can','like','time','no','just','him','know','take','people','into','year','your','good','some','could','them','see','other','than','then','now','look','only','come','its','over','think','also','back','after','use','two','how','our','work','first','well','way','even','new','want','because','any','these','give','day','most','us','between','need','large','often','hand','high','place','hold','free','real','life','few','north','feel','black','tell','upon','keep'];
+let words=[],cur=0,typed='',timer=null,timeLeft=60,started=false,correct=0,wrong=0,totalTyped=0;
+
+function genWords(n=80){return Array.from({length:n},()=>WORDS[Math.floor(Math.random()*WORDS.length)]);}
+
+function render(){
+  const d=document.getElementById('wordDisplay');
+  d.innerHTML=words.map((w,i)=>{
+    if(i<cur)return `<span class="correct">${w} </span>`;
+    if(i===cur){
+      const chars=w.split('').map((ch,j)=>{
+        if(j<typed.length)return `<span class="${typed[j]===ch?'correct':'wrong'}">${ch}</span>`;
+        if(j===typed.length)return `<span class="current">${ch}</span>`;
+        return ch;
+      }).join('');
+      return `<span>${chars} </span>`;
+    }
+    return `<span>${w} </span>`;
+  }).join('');
+}
+
+function onInput(){
+  const input=document.getElementById('typingInput');
+  const val=input.value;
+  if(!started){started=true;startTimer();}
+  if(val.endsWith(' ')){
+    const t=val.trim();
+    if(t===words[cur])correct++;else wrong++;
+    totalTyped++;cur++;typed='';input.value='';
+    if(cur>=words.length)words=[...words,...genWords(20)];
+  }else{typed=val;}
+  updateWPM();render();
+}
+
+function startTimer(){
+  timer=setInterval(()=>{
+    timeLeft--;
+    document.getElementById('timeLeft').textContent=timeLeft;
+    document.getElementById('timerFill').style.width=(timeLeft/60*100)+'%';
+    if(timeLeft<=0){clearInterval(timer);showResult();}
+  },1000);
+}
+
+function updateWPM(){
+  const elapsed=(60-timeLeft)||1;const wpm=Math.round((correct/elapsed)*60);
+  document.getElementById('wpm').textContent=Math.max(0,wpm);
+  const acc=totalTyped>0?Math.round((correct/totalTyped)*100):100;
+  document.getElementById('acc').textContent=acc;
+}
+
+function showResult(){
+  document.getElementById('typingInput').disabled=true;
+  const acc=totalTyped>0?Math.round((correct/totalTyped)*100):0;
+  document.getElementById('finalWpm').textContent=Math.round((correct/60)*60);
+  document.getElementById('finalAcc').textContent=acc+'%';
+  document.getElementById('finalCorrect').textContent=correct;
+  document.getElementById('finalWrong').textContent=wrong;
+  document.getElementById('resultOverlay').style.display='flex';
+}
+
+function restart(){
+  clearInterval(timer);timeLeft=60;started=false;cur=0;typed='';correct=0;wrong=0;totalTyped=0;
+  document.getElementById('wpm').textContent=0;
+  document.getElementById('acc').textContent=100;
+  document.getElementById('timeLeft').textContent=60;
+  document.getElementById('timerFill').style.width='100%';
+  document.getElementById('typingInput').value='';
+  document.getElementById('typingInput').disabled=false;
+  document.getElementById('typingInput').focus();
+  document.getElementById('resultOverlay').style.display='none';
+  words=genWords();render();
+}
+words=genWords();render();
+</script>
+</body>
+</html>
